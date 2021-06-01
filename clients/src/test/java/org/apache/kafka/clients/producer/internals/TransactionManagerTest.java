@@ -176,7 +176,7 @@ public class TransactionManagerTest {
 
         this.sender = new Sender(logContext, this.client, this.metadata, this.accumulator, true,
                 MAX_REQUEST_SIZE, ACKS_ALL, MAX_RETRIES, new SenderMetricsRegistry(metrics), this.time, REQUEST_TIMEOUT,
-                50, transactionManager, apiVersions);
+                50, transactionManager, apiVersions, null);
     }
 
     @Test
@@ -3043,7 +3043,7 @@ public class TransactionManagerTest {
         initializeTransactionManager(Optional.empty());
         Sender sender = new Sender(logContext, this.client, this.metadata, this.accumulator, false,
                 MAX_REQUEST_SIZE, ACKS_ALL, MAX_RETRIES, new SenderMetricsRegistry(new Metrics(time)), this.time,
-                REQUEST_TIMEOUT, 50, transactionManager, apiVersions);
+                REQUEST_TIMEOUT, 50, transactionManager, apiVersions, null);
         initializeIdempotentProducerId(producerId, epoch);
 
         ProducerBatch tp0b1 = writeIdempotentBatchWithValue(transactionManager, tp0, "1");
@@ -3167,7 +3167,7 @@ public class TransactionManagerTest {
         initializeTransactionManager(Optional.empty());
         Sender sender = new Sender(logContext, this.client, this.metadata, this.accumulator, false,
                 MAX_REQUEST_SIZE, ACKS_ALL, MAX_RETRIES, new SenderMetricsRegistry(new Metrics(time)), this.time,
-                REQUEST_TIMEOUT, 50, transactionManager, apiVersions);
+                REQUEST_TIMEOUT, 50, transactionManager, apiVersions, null);
         initializeIdempotentProducerId(producerId, epoch);
 
         ProducerBatch tp0b1 = writeIdempotentBatchWithValue(transactionManager, tp0, "1");

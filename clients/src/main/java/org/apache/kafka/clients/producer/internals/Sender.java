@@ -118,6 +118,9 @@ public class Sender implements Runnable {
     /* all the state related to transactions, in particular the producer id, producer epoch, and sequence numbers */
     private final TransactionManager transactionManager;
 
+    /* the Producer mute manager */
+    private final ProducerMuteManager producerMuteManager;
+
     // A per-partition queue of batches ordered by creation time for tracking the in-flight batches
     private final Map<TopicPartition, List<ProducerBatch>> inFlightBatches;
 
@@ -134,7 +137,8 @@ public class Sender implements Runnable {
                   int requestTimeoutMs,
                   long retryBackoffMs,
                   TransactionManager transactionManager,
-                  ApiVersions apiVersions) {
+                  ApiVersions apiVersions,
+                  ProducerMuteManager producerMuteManager) {
         this.log = logContext.logger(Sender.class);
         this.client = client;
         this.accumulator = accumulator;
@@ -151,6 +155,10 @@ public class Sender implements Runnable {
         this.apiVersions = apiVersions;
         this.transactionManager = transactionManager;
         this.inFlightBatches = new HashMap<>();
+        this.producerMuteManager = producerMuteManager;
+        if (this.producerMuteManager != null) {
+            this.producerMuteManager.setInFlightBatches(this.inFlightBatches);
+        }
     }
 
     public List<ProducerBatch> inFlightBatches(TopicPartition tp) {

@@ -16,6 +16,7 @@
  */
 package org.apache.kafka.clients.producer;
 
+import org.apache.kafka.clients.producer.internals.ProducerMuteManager;
 import org.apache.kafka.common.Configurable;
 
 /**
@@ -92,4 +93,12 @@ public interface ProducerInterceptor<K, V> extends Configurable {
      * This is called when interceptor is closed
      */
     public void close();
+
+    /**
+     * This method is called when the Producer is built to initialize the partition mute manager
+     *
+     * @param producerMuteManager
+     */
+    default void initialize(ProducerMuteManager producerMuteManager) {
+    }
 }

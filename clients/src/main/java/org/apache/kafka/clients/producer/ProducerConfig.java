@@ -263,6 +263,10 @@ public class ProducerConfig extends AbstractConfig {
             "By default the TransactionId is not configured, which means transactions cannot be used. " +
             "Note that, by default, transactions require a cluster of at least three brokers which is the recommended setting for production; for development you can change this, by adjusting broker setting <code>transaction.state.log.replication.factor</code>.";
 
+    /** <code>enable.partition.mute</code> */
+    public static final String ENABLE_MUTE_PARTITION_CONFIG = "enable.mute.partition";
+    private static final String ENABLE_MUTE_PARTITION_CONFIG_DOC = "When set to 'true', producer enable mute partition. ";
+
     /**
      * <code>security.providers</code>
      */
@@ -409,7 +413,12 @@ public class ProducerConfig extends AbstractConfig {
                                         null,
                                         new ConfigDef.NonEmptyString(),
                                         Importance.LOW,
-                                        TRANSACTIONAL_ID_DOC);
+                                        TRANSACTIONAL_ID_DOC)
+                                .define(ENABLE_MUTE_PARTITION_CONFIG,
+                                        Type.BOOLEAN,
+                                        false,
+                                        Importance.LOW,
+                                        ENABLE_MUTE_PARTITION_CONFIG_DOC);
     }
 
     @Override

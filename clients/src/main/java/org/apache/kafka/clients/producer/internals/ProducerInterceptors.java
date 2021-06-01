@@ -124,6 +124,21 @@ public class ProducerInterceptors<K, V> implements Closeable {
     }
 
     /**
+     *
+     * @param producerMuteManager
+     */
+    public void initialize(ProducerMuteManager producerMuteManager) {
+        for (ProducerInterceptor<K, V> interceptor : this.interceptors) {
+            try {
+                interceptor.initialize(producerMuteManager);
+            } catch (Exception e) {
+                // do not propagate interceptor exceptions, just log
+                log.warn("Error executing interceptor initialize", e);
+            }
+        }
+    }
+
+    /**
      * Closes every interceptor in a container.
      */
     @Override

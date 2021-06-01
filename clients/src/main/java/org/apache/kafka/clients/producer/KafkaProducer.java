@@ -29,6 +29,7 @@ import org.apache.kafka.clients.producer.internals.BufferPool;
 import org.apache.kafka.clients.producer.internals.ProducerInterceptors;
 import org.apache.kafka.clients.producer.internals.ProducerMetadata;
 import org.apache.kafka.clients.producer.internals.ProducerMetrics;
+import org.apache.kafka.clients.producer.internals.ProducerMuteManager;
 import org.apache.kafka.clients.producer.internals.RecordAccumulator;
 import org.apache.kafka.clients.producer.internals.Sender;
 import org.apache.kafka.clients.producer.internals.TransactionManager;
@@ -258,6 +259,7 @@ public class KafkaProducer<K, V> implements Producer<K, V> {
     private final ProducerInterceptors<K, V> interceptors;
     private final ApiVersions apiVersions;
     private final TransactionManager transactionManager;
+    private final ProducerMuteManager producerMuteManager;
 
     /**
      * A producer is instantiated by providing a set of key-value pairs as configuration. Valid configuration strings
@@ -425,7 +427,16 @@ public class KafkaProducer<K, V> implements Producer<K, V> {
                 this.metadata.bootstrap(addresses);
             }
             this.errors = this.metrics.sensor("errors");
+
+            this.producerMuteManager = configurePartitionMuteManager(config, logContext);
+
             this.sender = newSender(logContext, kafkaClient, this.metadata);
+
+            if (this.producerMuteManager != null) {
+                this.partitioner.initialize(this.producerMuteManager);
+                this.interceptors.initialize(this.producerMuteManager);
+            }
+
             String ioThreadName = NETWORK_THREAD_PREFIX + " | " + clientId;
             this.ioThread = new KafkaThread(ioThreadName, this.sender, true);
             this.ioThread.start();
@@ -479,7 +490,8 @@ public class KafkaProducer<K, V> implements Producer<K, V> {
                 requestTimeoutMs,
                 producerConfig.getLong(ProducerConfig.RETRY_BACKOFF_MS_CONFIG),
                 this.transactionManager,
-                apiVersions);
+                apiVersions,
+                this.producerMuteManager);
     }
 
     private static int lingerMs(ProducerConfig config) {
@@ -560,6 +572,16 @@ public class KafkaProducer<K, V> implements Producer<K, V> {
                         "producer. Otherwise we cannot guarantee idempotence.");
         }
         return acks;
+    }
+
+    private ProducerMuteManager configurePartitionMuteManager(ProducerConfig config, LogContext logContext) {
+        boolean enableMutePartition = config.getBoolean(ProducerConfig.ENABLE_MUTE_PARTITION_CONFIG);
+        ProducerMuteManager producerMuteManager = null;
+        if (enableMutePartition) {
+            producerMuteManager = new ProducerMuteManager(this.accumulator, logContext);
+            log.info("Instantiated a partition mute manager.");
+        }
+        return producerMuteManager;
     }
 
     /**
@@ -1249,6 +1271,8 @@ public class KafkaProducer<K, V> implements Producer<K, V> {
         Utils.closeQuietly(keySerializer, "producer keySerializer", firstException);
         Utils.closeQuietly(valueSerializer, "producer valueSerializer", firstException);
         Utils.closeQuietly(partitioner, "producer partitioner", firstException);
+        Utils.closeQuietly(producerMuteManager, "producer partition mute manager", firstException);
+
         AppInfoParser.unregisterAppInfo(JMX_PREFIX, clientId, metrics);
         Throwable exception = firstException.get();
         if (exception != null && !swallowException) {

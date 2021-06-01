@@ -135,6 +135,13 @@ public final class RecordMetadata {
         return this.topicPartition.partition();
     }
 
+    /**
+     * The topic partition the record was sent to
+     */
+    public TopicPartition topicPartition() {
+        return this.topicPartition;
+    }
+
     @Override
     public String toString() {
         return topicPartition.toString() + "@" + offset;

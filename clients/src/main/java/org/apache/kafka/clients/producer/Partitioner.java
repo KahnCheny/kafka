@@ -16,6 +16,7 @@
  */
 package org.apache.kafka.clients.producer;
 
+import org.apache.kafka.clients.producer.internals.ProducerMuteManager;
 import org.apache.kafka.common.Configurable;
 import org.apache.kafka.common.Cluster;
 
@@ -51,5 +52,13 @@ public interface Partitioner extends Configurable, Closeable {
      * @param prevPartition The partition previously selected for the record that triggered a new batch
      */
     default void onNewBatch(String topic, Cluster cluster, int prevPartition) {
+    }
+
+    /**
+     * This method is called when the Producer is built to initialize the partition mute manager
+     *
+     * @param producerMuteManager
+     */
+    default void initialize(ProducerMuteManager producerMuteManager) {
     }
 }
